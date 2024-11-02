@@ -5,101 +5,79 @@ use defmt_rtt as _;
 use panic_halt as _;
 
 use cortex_m_rt::entry;
-use microbit::{
-    adc::{Adc, AdcConfig, Default},
-    board::Board,
-    display::blocking::Display,
-    hal::Timer,
-};
+use embedded_hal::delay::DelayNs;
+use microbit::{board::Board, display::blocking::Display, hal::Timer};
 
 #[entry]
 fn main() -> ! {
-    let board = match Board::take() {
-        Some(board) => board,
-        None => panic!("failed to find board"),
-    };
+    if let Some(board) = Board::take() {
+        let mut timer = Timer::new(board.TIMER0);
+        let mut display = Display::new(board.display_pins);
 
-    let mut timer = Timer::new(board.TIMER0);
-    let mut display = Display::new(board.display_pins);
-    let mut adc = Adc::new(board.ADC, AdcConfig::default_10bit());
-    let mut anapin = board.edge.e00.into_floating_input();
-
-    let numbers = [
-        [
-            [0, 0, 1, 0, 0],
-            [0, 1, 0, 1, 0],
-            [0, 1, 0, 1, 0],
-            [0, 1, 0, 1, 0],
-            [0, 0, 1, 0, 0],
-        ],
-        [
-            [0, 0, 1, 0, 0],
-            [0, 1, 1, 0, 0],
-            [0, 0, 1, 0, 0],
-            [0, 0, 1, 0, 0],
-            [0, 0, 1, 0, 0],
-        ],
-        [
-            [0, 0, 1, 0, 0],
-            [0, 1, 0, 1, 0],
-            [0, 0, 1, 0, 0],
-            [0, 1, 0, 0, 0],
+        #[allow(non_snake_case)]
+        let letter_I = [
             [0, 1, 1, 1, 0],
-        ],
-        [
-            [0, 1, 1, 0, 0],
-            [0, 0, 0, 1, 0],
             [0, 0, 1, 0, 0],
-            [0, 0, 0, 1, 0],
+            [0, 0, 1, 0, 0],
+            [0, 0, 1, 0, 0],
+            [0, 1, 1, 1, 0],
+        ];
+
+        let heart = [
+            [0, 1, 0, 1, 0],
+            [1, 0, 1, 0, 1],
+            [1, 0, 0, 0, 1],
+            [0, 1, 0, 1, 0],
+            [0, 0, 1, 0, 0],
+        ];
+
+        #[allow(non_snake_case)]
+        let letter_R = [
             [0, 1, 1, 0, 0],
-        ],
-        [
+            [0, 1, 0, 1, 0],
+            [0, 1, 1, 0, 0],
+            [0, 1, 0, 1, 0],
+            [0, 1, 0, 1, 0],
+        ];
+
+        #[allow(non_snake_case)]
+        let letter_u = [
+            [0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0],
+            [0, 1, 0, 1, 0],
+            [0, 1, 0, 1, 0],
+            [0, 1, 1, 1, 0],
+        ];
+
+        #[allow(non_snake_case)]
+        let letter_s = [
+            [0, 0, 0, 0, 0],
+            [0, 0, 1, 1, 0],
             [0, 1, 0, 0, 0],
-            [1, 0, 0, 0, 0],
-            [1, 0, 1, 0, 0],
-            [1, 1, 1, 1, 0],
             [0, 0, 1, 0, 0],
-        ],
-    ];
+            [0, 1, 1, 1, 0],
+        ];
 
-    let sign_plus = [
-        [0, 0, 1, 0, 0],
-        [0, 0, 1, 0, 0],
-        [1, 1, 1, 1, 1],
-        [0, 0, 1, 0, 0],
-        [0, 0, 1, 0, 0],
-    ];
+        #[allow(non_snake_case)]
+        let letter_t = [
+            [0, 0, 1, 0, 0],
+            [0, 1, 1, 1, 0],
+            [0, 0, 1, 0, 0],
+            [0, 0, 1, 0, 0],
+            [0, 0, 1, 0, 0],
+        ];
 
-    let letter_e = [
-        [0, 1, 1, 1, 0],
-        [0, 1, 0, 0, 0],
-        [0, 1, 1, 0, 0],
-        [0, 1, 0, 0, 0],
-        [0, 1, 1, 1, 0],
-    ];
-
-    loop {
-        let analog = match adc.read_channel(&mut anapin) {
-            Ok(analog) => analog,
-            Err(_) => {
-                display.show(&mut timer, letter_e, 10);
-                continue;
-            }
-        };
-
-        let mut count = 0;
-
-        for number in numbers.iter() {
-            if count == (analog / 100).unsigned_abs() as usize {
-                display.show(&mut timer, *number, 10);
-                break;
-            }
-
-            count += 1;
-        }
-
-        if count == numbers.len() {
-            display.show(&mut timer, sign_plus, 10);
+        loop {
+            display.show(&mut timer, letter_I, 1000);
+            display.show(&mut timer, heart, 1000);
+            display.show(&mut timer, letter_R, 1000);
+            display.show(&mut timer, letter_u, 1000);
+            display.show(&mut timer, letter_s, 1000);
+            display.show(&mut timer, letter_t, 1000);
+            display.clear();
+            timer.delay_ms(250_u32);
         }
     }
+
+    panic!("End");
 }
