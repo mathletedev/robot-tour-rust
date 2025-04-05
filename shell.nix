@@ -6,7 +6,7 @@ in
 pkgs.mkShell rec {
   buildInputs = with pkgs; [
     pkgsUnstable.probe-rs-tools
-    flip-link
+    pkgsUnstable.flip-link
     gcc-arm-embedded
   ];
 }
